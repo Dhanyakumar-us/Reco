@@ -34,13 +34,15 @@ app.add_middleware(
 
 class RecommendRequest(BaseModel):
     useCase: str = "gaming"
-    budget: float = 2000.0
+    budget: float = 150000.0
     minRam: int = 16
     minStorage: int = 512
     preferredBrand: str | None = None
     minBatteryHours: float | None = 0.0
     maxWeightKg: float | None = 5.0
     needsDedicatedGpu: bool = False
+    preferredGpuTier: str = "any"
+    minGpuTgpWatts: int = 0
 
 
 class ChatRequest(BaseModel):
@@ -62,7 +64,7 @@ def get_laptops(
 ):
     results = list(MOCK_LAPTOPS)
     
-    if category:
+    if category and category != "all":
         results = [l for l in results if l["category"] == category]
     if brand:
         results = [l for l in results if l["brand"].lower() == brand.lower()]

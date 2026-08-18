@@ -68,27 +68,77 @@ export function App() {
       console.warn('Backend API offline or unreachable, using client-side recommendation engine');
     }
     
-    // Client-side fallback scoring logic in INR
+    // Client-side fallback scoring logic in INR matching backend engine
     const scored = MOCK_LAPTOPS_DATA.map((laptop) => {
-      let score = 95.0;
+      let score = 100.0;
       const reasons: string[] = [];
+      const specs = laptop.specs;
+      const price = laptop.currentBestPrice;
       
-      if (laptop.currentBestPrice <= prefs.budget) {
-        reasons.push(`Within budget (₹${laptop.currentBestPrice.toLocaleString('en-IN')})`);
+      // 1. Budget Fit
+      const budget = prefs.budget || 150000;
+      if (price <= budget) {
+        const savings = budget - price;
+        if (savings > 0) {
+          reasons.push(`Within budget (Under by ₹${Math.round(savings).toLocaleString('en-IN')})`);
+        } else {
+          reasons.push("Fits target budget");
+        }
       } else {
-        score -= 25.0;
-        reasons.push(`Over budget by ₹${(laptop.currentBestPrice - prefs.budget).toLocaleString('en-IN')}`);
+        const overBudget = price - budget;
+        const penalty = Math.min(40.0, (overBudget / budget) * 50);
+        score -= penalty;
+        reasons.push(`Over budget by ₹${Math.round(overBudget).toLocaleString('en-IN')}`);
       }
 
-      if (laptop.specs.ramGB >= prefs.minRam) {
-        reasons.push(`Meets ${prefs.minRam}GB RAM requirement`);
+      // 2. GPU Power & Tier
+      const minTgp = prefs.minGpuTgpWatts || 0;
+      const laptopTgp = specs.tgpWatts || 30;
+      const gpuTier = specs.gpuTier || "Integrated";
+      const prefTier = prefs.preferredGpuTier || "any";
+
+      if (prefTier !== "any") {
+        if (gpuTier.includes(prefTier) || gpuTier.startsWith(prefTier)) {
+          score += 10.0;
+          reasons.push(`Matches preferred GPU tier (${specs.gpu})`);
+        } else {
+          score -= 15.0;
+        }
+      }
+
+      if (minTgp > 0) {
+        if (laptopTgp >= minTgp) {
+          score += 5.0;
+          reasons.push(`High GPU Power: ${laptopTgp}W TGP meets ${minTgp}W+ requirement`);
+        } else {
+          score -= 20.0;
+        }
+      }
+
+      // 3. Workload Category
+      if (prefs.useCase === laptop.category) {
+        score += 5.0;
+        reasons.push(`Optimized specifically for ${prefs.useCase}`);
+      }
+
+      // 4. RAM
+      if (specs.ramGB >= prefs.minRam) {
+        reasons.push(`Meets ${prefs.minRam}GB RAM target`);
+      } else {
+        score -= 25.0;
+        reasons.push(`Has ${specs.ramGB}GB RAM (Less than ${prefs.minRam}GB)`);
+      }
+
+      // 5. Storage
+      if (specs.storageGB >= prefs.minStorage) {
+        reasons.push(`${specs.storageGB}GB NVMe SSD storage`);
       } else {
         score -= 20.0;
       }
 
-      if (laptop.category === prefs.useCase) {
-        score += 5.0;
-        reasons.push(`Optimized for ${prefs.useCase}`);
+      // 6. Dedicated GPU check
+      if (prefs.needsDedicatedGpu && gpuTier === "Integrated") {
+        score -= 30.0;
       }
 
       return {
@@ -365,6 +415,10 @@ export function App() {
       <LaptopDetailModal
         laptop={selectedDetailLaptop}
         onClose={() => setSelectedDetailLaptop(null)}
+        onAskChatbot={(prompt) => {
+          setIsChatOpen(true);
+          handleSendMessage(prompt);
+        }}
       />
 
       {/* Chatbot Side Drawer */}

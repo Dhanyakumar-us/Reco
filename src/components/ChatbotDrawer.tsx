@@ -39,6 +39,26 @@ export const ChatbotDrawer: React.FC<ChatbotDrawerProps> = ({
     onSendMessage(prompt);
   };
 
+  const formatMessageText = (text: string) => {
+    // Splits text into lines and replaces **bold** syntax with <strong> elements
+    const lines = text.split('\n');
+    return lines.map((line, lIdx) => {
+      const parts = line.split(/(\*\*.*?\*\*)/g);
+      const lineContent = parts.map((part, pIdx) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={pIdx} className="font-bold text-cyan-300">{part.slice(2, -2)}</strong>;
+        }
+        return part;
+      });
+      return (
+        <React.Fragment key={lIdx}>
+          {lineContent}
+          {lIdx < lines.length - 1 && <br />}
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
     <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-[#0B0F19]/95 backdrop-blur-xl border-l border-gray-800 shadow-2xl flex flex-col justify-between">
       
@@ -90,7 +110,7 @@ export const ChatbotDrawer: React.FC<ChatbotDrawerProps> = ({
                       : 'bg-gray-900/90 text-gray-100 border border-gray-800 rounded-bl-none shadow-lg'
                   }`}
                 >
-                  <div className="whitespace-pre-line">{msg.text}</div>
+                  <div>{formatMessageText(msg.text)}</div>
                 </div>
 
                 {/* Quick Reply Chips */}

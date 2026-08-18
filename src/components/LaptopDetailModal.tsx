@@ -1,6 +1,6 @@
 import React from 'react';
 import { Laptop } from '../types';
-import { X, Star, TrendingDown, CheckCircle2, ExternalLink, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { X, Star, TrendingDown, CheckCircle2, ExternalLink, ThumbsUp, ThumbsDown, MessageSquareBot } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 interface LaptopDetailModalProps {
@@ -12,6 +12,7 @@ interface LaptopDetailModalProps {
 export const LaptopDetailModal: React.FC<LaptopDetailModalProps> = ({
   laptop,
   onClose,
+  onAskChatbot,
 }) => {
   if (!laptop) return null;
 
@@ -89,8 +90,8 @@ export const LaptopDetailModal: React.FC<LaptopDetailModalProps> = ({
                 </ul>
               </div>
 
-              {/* Best Deal Action */}
-              <div className="flex items-center justify-between pt-2">
+              {/* Best Deal Action & AI Chatbot Ask */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                 <div>
                   <span className="text-xs text-gray-400 block">Lowest Price Found</span>
                   <div className="flex items-baseline gap-2">
@@ -101,15 +102,30 @@ export const LaptopDetailModal: React.FC<LaptopDetailModalProps> = ({
                   </div>
                 </div>
 
-                <a
-                  href={bestRetailer.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-sm shadow-glow-cyan flex items-center gap-2 transition-all transform hover:scale-105"
-                >
-                  <span>Buy on {bestRetailer.retailer}</span>
-                  <ExternalLink className="w-4 h-4" />
-                </a>
+                <div className="flex items-center gap-2">
+                  {onAskChatbot && (
+                    <button
+                      onClick={() => {
+                        onAskChatbot(`Is ${laptop.name} worth buying for ${laptop.category}?`);
+                        onClose();
+                      }}
+                      className="px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-cyan-400 font-bold text-xs border border-gray-700 flex items-center gap-1.5 transition-all"
+                    >
+                      <MessageSquareBot className="w-4 h-4" />
+                      <span>Ask AI Advisor</span>
+                    </button>
+                  )}
+
+                  <a
+                    href={bestRetailer.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-extrabold text-sm shadow-glow-cyan flex items-center gap-2 transition-all transform hover:scale-105"
+                  >
+                    <span>Buy on {bestRetailer.retailer}</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
               </div>
 
             </div>

@@ -445,14 +445,18 @@ def serve_ui():
 
       let filtered = allLaptops.filter(l => {
         const matchCat = currentCategory === 'all' || l.category === currentCategory;
-        const matchSearch = search === '' || l.name.toLowerCase().includes(search) || l.brand.toLowerCase().includes(search) || l.specs.gpu.toLowerCase().includes(search) || (l.certifications || []).some(c => c.toLowerCase().includes(search));
+        const matchSearch = search === '' || l.name.toLowerCase().includes(search) || l.brand.toLowerCase().includes(search) || l.specs.cpu.toLowerCase().includes(search) || l.specs.gpu.toLowerCase().includes(search) || (l.certifications || []).some(c => c.toLowerCase().includes(search));
         return matchCat && matchSearch;
       });
 
       filtered.sort((a,b) => {
         if(sort === 'match') return (b.matchScore || 0) - (a.matchScore || 0);
         if(sort === 'power') return (b.powerScore10 || 0) - (a.powerScore10 || 0);
-        if(sort === 'student_savings') return (a.studentBenefits ? a.studentBenefits.studentPrice : a.currentBestPrice) - (b.studentBenefits ? b.studentBenefits.studentPrice : b.currentBestPrice);
+        if(sort === 'student_savings') {
+          const savingsA = a.msrp - (a.studentBenefits && a.studentBenefits.studentPrice ? a.studentBenefits.studentPrice : a.currentBestPrice);
+          const savingsB = b.msrp - (b.studentBenefits && b.studentBenefits.studentPrice ? b.studentBenefits.studentPrice : b.currentBestPrice);
+          return savingsB - savingsA;
+        }
         if(sort === 'price_low') return a.currentBestPrice - b.currentBestPrice;
         if(sort === 'rating') return b.reviews.rating - a.reviews.rating;
         return 0;
@@ -769,6 +773,7 @@ def serve_ui():
       userPrefs.budget = Number(document.getElementById('wiz-budget').value);
       userPrefs.minRam = Number(document.getElementById('wiz-ram').value);
       userPrefs.minStorage = Number(document.getElementById('wiz-storage').value);
+      userPrefs.minBatteryHours = Number(document.getElementById('wiz-battery').value);
       userPrefs.preferredGpuTier = document.getElementById('wiz-gpu-tier').value;
       userPrefs.minGpuTgpWatts = Number(document.getElementById('wiz-gpu-tgp').value);
 
